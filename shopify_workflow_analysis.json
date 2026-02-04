@@ -1,0 +1,169 @@
+{
+  "workflow_id": "2rN72rtR8JAX9rV5",
+  "name": "Shopify Occasions - Batch Update (Pagination 250)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "manual-trigger",
+      "name": "1️⃣ Démarrage",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [240, 1504]
+    },
+    {
+      "id": "init-pagination",
+      "name": "2️⃣ Initialize Pagination",
+      "type": "n8n-nodes-base.code",
+      "position": [464, 1504]
+    },
+    {
+      "id": "shopify-get-products",
+      "name": "3️⃣ Shopify - Get 250 Products",
+      "type": "n8n-nodes-base.shopify",
+      "position": [688, 1504],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "product",
+        "operation": "getAll",
+        "limit": 10
+      },
+      "credentials": {
+        "shopifyOAuth2Api": {
+          "id": "VniaQQuQc9LfrLh8",
+          "name": "Shopify account"
+        }
+      }
+    },
+    {
+      "id": "check-has-products",
+      "name": "4️⃣ Has Products?",
+      "type": "n8n-nodes-base.if",
+      "position": [912, 1432]
+    },
+    {
+      "id": "loop-products-in-batch",
+      "name": "5️⃣ Loop Over Products",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [1136, 1312]
+    },
+    {
+      "id": "extract-data",
+      "name": "6️⃣ Extract Product Data",
+      "type": "n8n-nodes-base.code",
+      "position": [1360, 952]
+    },
+    {
+      "id": "filter-products",
+      "name": "7️⃣ Filtre Strict",
+      "type": "n8n-nodes-base.if",
+      "position": [1584, 952]
+    },
+    {
+      "id": "build-prompt",
+      "name": "8️⃣ Build AI Prompt",
+      "type": "n8n-nodes-base.code",
+      "position": [1808, 880]
+    },
+    {
+      "id": "github-models-api",
+      "name": "9️⃣ GitHub Copilot GPT-4",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2032, 880],
+      "parameters": {
+        "method": "POST",
+        "url": "https://models.inference.ai.azure.com/chat/completions"
+      }
+    },
+    {
+      "id": "parse-ai-response",
+      "name": "🔟 Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "position": [2256, 880]
+    },
+    {
+      "id": "shopify-update-metafield",
+      "name": "1️⃣1️⃣ Shopify - Update Occasions",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2480, 880],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://luckybag-paris.myshopify.com/admin/api/2024-01/products/{{ $json.productId }}/metafields.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "shopifyOAuth2Api"
+      },
+      "credentials": {
+        "shopifyOAuth2Api": {
+          "id": "VniaQQuQc9LfrLh8",
+          "name": "Shopify account"
+        }
+      }
+    },
+    {
+      "id": "log-success",
+      "name": "1️⃣2️⃣ Log Success",
+      "type": "n8n-nodes-base.set",
+      "position": [2704, 880]
+    },
+    {
+      "id": "log-skip",
+      "name": "1️⃣3️⃣ Log Skip",
+      "type": "n8n-nodes-base.set",
+      "position": [2704, 1072]
+    },
+    {
+      "id": "merge-results",
+      "name": "1️⃣4️⃣ Merge",
+      "type": "n8n-nodes-base.merge",
+      "position": [2928, 952]
+    },
+    {
+      "id": "update-pagination",
+      "name": "1️⃣5️⃣ Update Pagination State",
+      "type": "n8n-nodes-base.code",
+      "position": [1360, 1288]
+    },
+    {
+      "id": "check-continue-loop",
+      "name": "1️⃣6️⃣ Continue Loop?",
+      "type": "n8n-nodes-base.if",
+      "position": [1584, 1288]
+    },
+    {
+      "id": "final-summary",
+      "name": "1️⃣7️⃣ Final Summary",
+      "type": "n8n-nodes-base.set",
+      "position": [1808, 1408]
+    },
+    {
+      "id": "wait-product-rate-limit",
+      "name": "⏱️ Wait (0.05s per product)",
+      "type": "n8n-nodes-base.wait",
+      "position": [3152, 1192]
+    },
+    {
+      "id": "wait-batch-rate-limit",
+      "name": "⏱️ Wait (1s between batches)",
+      "type": "n8n-nodes-base.wait",
+      "position": [1808, 1216]
+    }
+  ],
+  "connections": {
+    "1️⃣ Démarrage": ["2️⃣ Initialize Pagination"],
+    "2️⃣ Initialize Pagination": ["3️⃣ Shopify - Get 250 Products"],
+    "3️⃣ Shopify - Get 250 Products": ["4️⃣ Has Products?"],
+    "4️⃣ Has Products?": ["5️⃣ Loop Over Products", "1️⃣7️⃣ Final Summary"],
+    "5️⃣ Loop Over Products": ["1️⃣5️⃣ Update Pagination State", "6️⃣ Extract Product Data"],
+    "6️⃣ Extract Product Data": ["7️⃣ Filtre Strict"],
+    "7️⃣ Filtre Strict": ["8️⃣ Build AI Prompt", "1️⃣3️⃣ Log Skip"],
+    "8️⃣ Build AI Prompt": ["9️⃣ GitHub Copilot GPT-4"],
+    "9️⃣ GitHub Copilot GPT-4": ["🔟 Parse AI Response"],
+    "🔟 Parse AI Response": ["1️⃣1️⃣ Shopify - Update Occasions"],
+    "1️⃣1️⃣ Shopify - Update Occasions": ["1️⃣2️⃣ Log Success"],
+    "1️⃣2️⃣ Log Success": ["1️⃣4️⃣ Merge"],
+    "1️⃣3️⃣ Log Skip": ["1️⃣4️⃣ Merge"],
+    "1️⃣4️⃣ Merge": ["⏱️ Wait (0.05s per product)"],
+    "1️⃣5️⃣ Update Pagination State": ["1️⃣6️⃣ Continue Loop?"],
+    "1️⃣6️⃣ Continue Loop?": ["⏱️ Wait (1s between batches)", "1️⃣7️⃣ Final Summary"],
+    "⏱️ Wait (0.05s per product)": ["5️⃣ Loop Over Products"],
+    "⏱️ Wait (1s between batches)": ["3️⃣ Shopify - Get 250 Products"]
+  }
+}
